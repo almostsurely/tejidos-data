@@ -3,6 +3,12 @@ language: python
 services:
   - docker
 
-before_install:
-- docker build -t tejidos-data/gdal:3.2-python3.8 .
-- docker run -v $(pwd):/var/task tejido /bin/bash /var/task/ run_before_push.sh
+install:
+  - docker build -t tejidos-data/gdal:3.2-python3.8 .
+
+script:
+  - docker run -v $(pwd):/var/task tejidos-data/gdal:3.2-python3.8 mypy tejidos tests
+  - docker run -v $(pwd):/var/task tejidos-data/gdal:3.2-python3.8 pylint tejidos tests
+  - docker run -v $(pwd):/var/task tejidos-data/gdal:3.2-python3.8 python -m nose2
+  - zip -r9q package.zip tejidos
+  - zipinfo package.zip
