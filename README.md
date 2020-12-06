@@ -1,4 +1,4 @@
-# tejidos-data
+# Tejidos [![Build Status](https://travis-ci.org/almostsurely/tejidos-data.svg?branch=main)](https://travis-ci.org/almostsurely/tejidos-data)
 
 First raster data examples are [here](https://www.dropbox.com/sh/fommmsz3g9fekyz/AAD0FNGvz6_T3KoyNLeLQwAKa?dl=0). 
 
