@@ -12,3 +12,11 @@ script:
   - docker run -v $(pwd):/var/task tejidos-data/gdal:3.2-python3.8 python -m nose2
   - zip -r9q package.zip tejidos
   - zipinfo package.zip
+
+deploy:
+  provider: lambda
+  function_name: "rasterio-test"
+  region: "us-east-1"
+  role: "arn:aws:iam::892700351551:role/service-role/rasterio-test-role-i0hq46qi"
+  runtime: "python3.7"
+  handler_name: "tejidos.util"
