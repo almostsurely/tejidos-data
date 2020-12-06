@@ -1,0 +1,8 @@
+language: python
+
+services:
+  - docker
+
+before_install:
+- docker build -t tejidos-data/gdal:3.2-python3.8 .
+- docker run -v $(pwd):/var/task tejido /bin/bash /var/task/ run_before_push.sh
