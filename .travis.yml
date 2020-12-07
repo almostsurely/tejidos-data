@@ -15,7 +15,7 @@ script:
 
 deploy:
   - on:
-      branch: master
+      branch: main
     publish: true
     provider: lambda
     function_name: "rasterio-test"
