@@ -22,5 +22,6 @@ deploy:
     region: "us-east-1"
     role: "arn:aws:iam::892700351551:role/service-role/rasterio-test-role-i0hq46qi"
     runtime: "python3.7"
-    handler_name: "tejidos.handlers.sum_handler"
+    module_name: tejidos.handlers
+    handler_name: sum_handler
     zip: package.zip
