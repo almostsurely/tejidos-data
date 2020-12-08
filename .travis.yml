@@ -38,7 +38,7 @@ deploy:
     handler_name: process_handler
     zip: package.zip
 
-    - on:
+  - on:
       branch: main
     publish: true
     provider: lambda
