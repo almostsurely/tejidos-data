@@ -44,7 +44,7 @@ deploy:
     provider: lambda
     function_name: "tejidos-endpoint"
     region: "us-east-1"
-    role: "arn:aws:iam::892700351551:role/service-role/tejidos-endpoint-role-ng9odb97"
+    role: "arn:aws:iam::892700351551:role/service-role/tejidos-endpoint-role-8xr4b810"
     runtime: "python3.7"
     module_name: tejidos.handlers
     handler_name: endpoint_handler
