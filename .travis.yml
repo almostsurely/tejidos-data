@@ -23,5 +23,17 @@ deploy:
     role: "arn:aws:iam::892700351551:role/service-role/rasterio-test-role-i0hq46qi"
     runtime: "python3.7"
     module_name: tejidos.handlers
-    handler_name: sum_handler
+    handler_name: download_handler
+    zip: package.zip
+
+  - on:
+      branch: main
+    publish: true
+    provider: lambda
+    function_name: "tejidos-process"
+    region: "us-east-1"
+    role: "arn:aws:iam::892700351551:role/service-role/tejidos-process-role-ng9odb97"
+    runtime: "python3.8"
+    module_name: tejidos.handlers
+    handler_name: process_handler
     zip: package.zip
