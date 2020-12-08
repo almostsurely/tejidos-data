@@ -2,7 +2,7 @@ import unittest
 
 from tejidos.handlers import sum_handler
 
-@
+
 class TestUtil(unittest.TestCase):
 
     @unittest.skip("Testing")
