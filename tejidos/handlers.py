@@ -35,4 +35,4 @@ def process_handler(event: Any, _context: Any) -> None:
 def endpoint_handler(_event: Any, _context: Any) -> Dict:
 
     logging.info("Endpoint handler.")
-    return {"latest_execution": "ok"}
+    return loads_json_from_s3(bucket="tejidos-data", key="output/datetime.txt")
