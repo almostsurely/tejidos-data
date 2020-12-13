@@ -2,7 +2,7 @@ import json
 import logging
 
 from datetime import datetime
-from typing import Any, Dict, cast
+from typing import Any, Dict, cast, List, Union
 from tejidos.util import dumps_json_to_s3, loads_json_from_s3, loads_csv_from_s3
 
 def download_handler(_event: Any, _context: Any) -> None:
@@ -36,7 +36,16 @@ def endpoint_handler(_event: Any, _context: Any) -> Dict:
 
     logging.info("Endpoint handler.")
 
-    return {"execution_time": loads_json_from_s3(bucket="tejidos-data", key="output/datetime.txt"),
-            "threading": loads_csv_from_s3(bucket="tejidos-data", key="output/threading.csv"),
-            "tieup": loads_csv_from_s3(bucket="tejidos-data", key="output/tieup.csv"),
-            "treadling": loads_csv_from_s3(bucket="tejidos-data", key="output/treadling.csv")}
+    def transform(data: Union[List, str]) -> Union[List, int]:
+        if isinstance(data, list):
+            return [transform(element) for element in data]
+        return int(float(data))
+
+    return {"execution_time": loads_json_from_s3(bucket="tejidos-data",
+                                                 key="output/datetime.txt"),
+            "threading": transform(loads_csv_from_s3(bucket="tejidos-data",
+                                                     key="output/threading.csv")),
+            "tieup": transform(loads_csv_from_s3(bucket="tejidos-data",
+                                                 key="output/tieup.csv")),
+            "treadling": transform(loads_csv_from_s3(bucket="tejidos-data",
+                                                     key="output/treadling.csv"))}
