@@ -24,7 +24,6 @@ def get_station_list(access_token):
 def get_station_disponibility(access_token):
 	gsd_url = 'https://pubsbapi-latam.smartbike.com/api/v1/stations/status.json?access_token='+access_token
 	station_disp = json_from_url(gsd_url)
-	print(station_disp)
 	station_df = pd.DataFrame.from_dict(station_disp['stationsStatus'])
 	return(station_df)
 
