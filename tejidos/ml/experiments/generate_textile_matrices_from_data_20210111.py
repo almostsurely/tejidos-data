@@ -205,7 +205,7 @@ def generate_textile_matrices_from_data(
 
 if __name__ == "__main__":
     generate_textile_matrices_from_data(
-    	filename = '../data/20210108_tejidos_testdata2.csv', 
+    	filename ='../data/20210108_tejidos_testdata2.csv',
     	dir_output = '2021-01-11', 
     	save_plots = False,
     	)
