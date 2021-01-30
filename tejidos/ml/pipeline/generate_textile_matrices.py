@@ -50,12 +50,10 @@ def get_draft(treadling, threading, tieup):
         y_th = treadling[i % treadling_len]
         for j in range(threading_len):
             x_th = threading[j % threading_len]
-            #         print("i", i+1, "j", j+1, "x_th", x_th, "y_th", y_th, "treadling.length", treadling_len, "threading.length", threading_len)
 
             # choose color
             if tieup[x_th - 1][y_th - 1] == 1:
                 matrix[i, j] = 1
-    #             print("i", i+1, "j", j+1, "x_th", x_th, "y_th", y_th, "treadling.length", treadling_len, "threading.length", threading_len)
 
     return matrix
 
