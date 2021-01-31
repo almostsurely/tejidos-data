@@ -54,16 +54,17 @@ class SentinelManager:
         df_sorted = df_sorted.head(1)
         return df_sorted
 
-    def download_product(self, product: DataFrame) -> str:
+    def download_product(self, product: DataFrame, destination_path: str) -> str:
         """
         Checks if compressed product exists. If not, downloads it.
         :param product:
         :return: Name of file.
         """
-        product_name = str(product['title'][0]) + '.zip'
+        _, title = product['title']
+        product_name = os.path.join(destination_path, f"{title}.zip")
         if not path.exists(product_name):
             logging.info(f"Downloading {product_name}")
-            self._sentinel_api.download_all(product.index)
+            self._sentinel_api.download_all(product.index, directory_path=destination_path)
         return product_name
 
 def main():
@@ -106,7 +107,7 @@ def main():
                                           end_date=last_day_current_month)
 
     product = SentinelManager.last_product(products)
-    product_name = sentinel_manager.download_product(product)
+    product_name = sentinel_manager.download_product(product, "")
 
     zipfile = ZipFile(product_name, 'r')
     zipfile.extractall('data_sentinel')
