@@ -92,8 +92,6 @@ class TestSentinelManager(unittest.TestCase):
 
     def test_last_product(self):
         latest_date = date(2000, 1, 20)
-
-        expected = DataFrame({'ingestiondate': [latest_date]}, columns=["ingestiondate"])
         product = DataFrame({
             'ingestiondate': [date(2000, 1, 3),
                               date(2000, 1, 9),
