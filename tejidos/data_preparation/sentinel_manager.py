@@ -11,13 +11,36 @@ from sentinelsat import SentinelAPI
 from sentinelsat import read_geojson
 from sentinelsat import geojson_to_wkt
 from datetime import date
+from datetime import timedelta
 import os
 from os import path
 from zipfile import ZipFile
+from os.path import basename
+from rasterio.mask import mask
+import rasterio
+
+
 
 SCIHUB_URL = 'https://scihub.copernicus.eu/dhus'
 SCIHUB_USER = 'SCIHUB_USER'
 SCIHUB_PASS = 'SCIHUB_PASS'
+
+def timeframe(daysdelta=10):
+    start_date = date.today().replace(day=1) - timedelta(days=daysdelta)
+    end_date = date.today()
+    return((start_date, end_date))
+
+def mask_from_json(geojson):
+    return([geojson['features'][0]['geometry']])
+
+def list_files(directory, endswith = "60m.jp2"):
+    files_endswith = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(endswith):
+                fullpath = root +'/'+ file
+                files_endswith.append(fullpath)
+    return(files_endswith)
 
 class SentinelManager:
 
@@ -60,18 +83,37 @@ class SentinelManager:
         :param product:
         :return: Name of file.
         """
-        _, title = product['title']
+        #_, title = product['title']
+        title = str(product['title'][0])     
         product_name = os.path.join(destination_path, f"{title}.zip")
         if not path.exists(product_name):
             logging.info(f"Downloading {product_name}")
-            self._sentinel_api.download_all(product.index, directory_path=destination_path)
+            #self._sentinel_api.download_all(product.index, directory_path=destination_path)
         return product_name
+
+    def harmonize_bands(bands_list, cropping_mask, extension = ".tif"):
+
+        for band in bands_list:
+            with rasterio.open(band) as src:
+                out_image, out_transform = mask(src, cropping_mask, crop=True)
+
+            out_meta = src.meta.copy()
+            out_meta.update({"driver": "GTiff",
+                             "height": out_image.shape[1],
+                             "width": out_image.shape[2],
+                             "transform": out_transform})
+            output_path = basename(band)[:-4]
+            with rasterio.open(output_path + extension, "w", **out_meta) as dest:
+                dest.write(out_image)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--footprint',
                         type=str,
-                        default='data_polygons/roi_extent.geojson')
+                        default='data_polygons/roi_extent_latlon.json')
+    parser.add_argument('--mask',
+                        type=str,
+                        default='data_polygons/roi_extent.json')
     parser.add_argument('--scihub-user',
                         type=str,
                         default=None)
@@ -99,8 +141,8 @@ def main():
     year = today.year
     month = today.month
 
-    first_day_current_month = date(year, month, 1)
-    last_day_current_month = date(year, month, calendar.monthrange(year, month)[1])
+    first_day_current_month = timeframe()[0]
+    last_day_current_month = timeframe()[1]
 
     products = sentinel_manager.api_query(footprint=footprint,
                                           begin_date=first_day_current_month,
@@ -112,6 +154,12 @@ def main():
     zipfile = ZipFile(product_name, 'r')
     zipfile.extractall('data_sentinel')
     zipfile.close()
+
+    cropping_mask = mask_from_json(read_geojson(crop_extent_path))
+
+    bands = list_files('data_sentinel/'+basename(product_name)[:-4]+".SAFE")
+
+    SentinelManager.harmonize_bands(bands, mask)
 
     os.remove(product_name)
 
