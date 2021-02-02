@@ -40,6 +40,15 @@ class AccessToken:
     def is_fresh(self):
         return datetime.now() < self.expire_time
 
+    def __eq__(self, other: AccessToken) -> bool:
+        return self.client_id == other.client_id and \
+               self.client_secret == other.client_secret and \
+               self.access_token == other.access_token and \
+               self.refresh_token == other.refresh_token and \
+               self.scope == other.scope and \
+               self.token_type == other.token_type
+
+
 
 class EcobiciManager:
     _instance = None
