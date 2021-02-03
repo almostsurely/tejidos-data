@@ -63,7 +63,7 @@ class TestSentinelManager(unittest.TestCase):
         destination = "some_path"
         expected = f"{destination}/{title}.zip"
         product = DataFrame({
-            'title': ("_", title)
+            'title': (title,)
         }, columns=["title"])
 
         actual = sentinel_manager.download_product(product=product, destination_path=destination)
@@ -83,7 +83,7 @@ class TestSentinelManager(unittest.TestCase):
         destination = "some_path"
         expected = f"{destination}/{title}.zip"
         product = DataFrame({
-            'title': ("_", title)
+            'title': (title,)
         }, columns=["title"])
 
         actual = sentinel_manager.download_product(product=product, destination_path=destination)
@@ -102,3 +102,8 @@ class TestSentinelManager(unittest.TestCase):
 
         actual = SentinelManager.last_product(product)
         self.assertEqual(actual["ingestiondate"].iloc[0], latest_date)
+
+
+    def test_harmonize(self):
+        # TODO: Write test for harminonize.
+        pass

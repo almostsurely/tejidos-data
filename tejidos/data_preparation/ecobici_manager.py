@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import os
 import urllib.request
+from functools import cache
 from typing import Dict, Any
 
 import pandas as pd
@@ -91,11 +92,14 @@ class EcobiciManager:
         access_data = EcobiciManager._call_endpoint(url=f'{ECOBICI_ENDPOINT}/token?{{params}}', params=params)
         self._token = AccessToken.from_dict(access_data)
 
+    @cache
     def get_station_list(self) -> Dict[str, Any]:
+        print("calling get_station_list")
         params = {"access_token": self._access_token}
         return EcobiciManager._call_endpoint(url=f'{ECOBICI_ENDPOINT_STATIONS}/stations.json?{{params}}', params=params)
 
     def get_station_disponibility(self) -> Dict[str, Any]:
+        print("calling get_station_disponibility")
         params = {"access_token": self._access_token}
         return EcobiciManager._call_endpoint(url=f'{ECOBICI_ENDPOINT_STATIONS}/stations/status.json?{{params}}',
                                              params=params)
@@ -112,17 +116,43 @@ def main() -> None:
     ecobici_manager = EcobiciManager.instance()
     station_list = ecobici_manager.get_station_list()
     station_disponibility = ecobici_manager.get_station_disponibility()
-    station_df = pd.DataFrame.from_dict(station_list['stations'])
-    disponibility_df = pd.DataFrame.from_dict(station_disponibility['stationsStatus'])
+
+    station_statuses = {}
+
+    for status in station_disponibility['stationsStatus']:
+        station_statuses.update({status.get("id"): status})
+
+    result = []
+    for station in station_list.get('stations', []):
+        station_id = station.get('id')
+        if station_id is not None:
+
+            station_status = station_statuses.get(station_id, {})
+
+            entry = {**station,
+                     "lat": station.get("location", {}).get("lat"),
+                     "lon": station.get("location", {}).get("lon"),
+                     "available_bikes": station_status.get("availability", {}).get("bikes"),
+                     "available_slots": station_status.get("availability", {}).get("slots"),
+                     **station_status}
+
+            del entry["location"]
+            del entry["availability"]
+
+
+            result.append(entry)
+
+
+    ecobici_data = pd.DataFrame.from_dict(result)
 
     output_directory = 'data_ecobici'
 
     if not os.path.isdir(output_directory):
         os.mkdir(output_directory)
 
-    station_df.to_csv(os.path.join(output_directory, 'stations.csv'), sep=',', encoding='utf-8')
-    disponibility_df.to_csv(os.path.join(output_directory, 'station-disponibility.csv'), sep=',', encoding='utf-8')
+    ecobici_data.to_csv(os.path.join(output_directory, 'ecobici_data.csv'), sep=',', encoding='utf-8')
 
 
 if __name__ == "__main__":
     main()
+

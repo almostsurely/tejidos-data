@@ -3,6 +3,23 @@
 First raster data examples are [here](https://www.dropbox.com/sh/fommmsz3g9fekyz/AAD0FNGvz6_T3KoyNLeLQwAKa?dl=0). 
 
 
+## Run tests before pushing
+
+
+```buildoutcfg
+ python -m nose2
+```
+
+You should expect an output like:
+
+```buildoutcfg
+----------------------------------------------------------------------
+Ran 15 tests in 0.038s
+
+OK
+```
+
+
 ## Setup
 
 Building the docker image is accomplished with the following command:
