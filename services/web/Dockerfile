@@ -7,6 +7,9 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+
+RUN yum install -y nmap
+
 # install dependencies
 RUN pip install --upgrade pip
 # Copy any local files to the package
@@ -17,3 +20,6 @@ RUN pip install -r ${PACKAGE_PREFIX}/requirements.txt
 
 # copy project
 COPY . /usr/src/app/
+
+# run entrypoint.sh
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
