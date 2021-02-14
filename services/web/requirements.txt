@@ -12,6 +12,8 @@ cligj==0.7.1
 coverage==5.3
 Flask==1.1.2
 Flask-SQLAlchemy==2.4.4
+GeoAlchemy2==0.8.4
+gunicorn==20.0.4
 psycopg2-binary==2.8.6
 geojson==2.5.0
 geomet==0.3.0

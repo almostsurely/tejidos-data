@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import os
 import urllib.request
-from functools import cache
 from typing import Dict, Any
 
 import pandas as pd
@@ -92,7 +91,6 @@ class EcobiciManager:
         access_data = EcobiciManager._call_endpoint(url=f'{ECOBICI_ENDPOINT}/token?{{params}}', params=params)
         self._token = AccessToken.from_dict(access_data)
 
-    @cache
     def get_station_list(self) -> Dict[str, Any]:
         print("calling get_station_list")
         params = {"access_token": self._access_token}
@@ -108,6 +106,7 @@ class EcobiciManager:
     def _call_endpoint(url: str, params: Dict = None) -> Dict[str, Any]:
         params = params or {}
         gat_url = url.format(params=urllib.parse.urlencode(params))
+
         response = requests.get(gat_url)
         return response.json()
 
@@ -116,6 +115,9 @@ def main() -> None:
     ecobici_manager = EcobiciManager.instance()
     station_list = ecobici_manager.get_station_list()
     station_disponibility = ecobici_manager.get_station_disponibility()
+
+    import json
+    print(json.dumps(station_list, indent=4))
 
     station_statuses = {}
 

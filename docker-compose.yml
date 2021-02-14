@@ -13,7 +13,7 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:13-alpine
+    image: kartoza/postgis:13.0
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
