@@ -43,7 +43,7 @@ class Station(db.Model):
 @app.route("/")
 def hello_world():
     stations = Station.query.all()
-    return jsonify(stations=[{"id": station.id} for station in stations])
+    return jsonify(stations=[{"id": station.id, "name": station.name} for station in stations])
 
 
 @app.route("/media/<path:filename>")
