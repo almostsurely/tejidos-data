@@ -9,7 +9,8 @@ ENV PYTHONUNBUFFERED 1
 
 
 RUN yum install -y nmap
-
+RUN yum -y install crontabs
+RUN chkconfig crond on
 # install dependencies
 RUN pip install --upgrade pip
 # Copy any local files to the package

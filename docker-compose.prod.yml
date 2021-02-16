@@ -5,6 +5,9 @@ services:
     build: ./services/nginx
     ports:
       - 1337:80
+    volumes:
+      - static_volume:/home/app/web/tejidos/static
+      - media_volume:/home/app/web/tejidos/media
     depends_on:
       - web
   web:
@@ -12,6 +15,9 @@ services:
       context: ./services/web
       dockerfile: Dockerfile.prod
     command: gunicorn --bind 0.0.0.0:5000 manage:app
+    volumes:
+      - static_volume:/home/app/web/tejidos/static
+      - media_volume:/home/app/web/tejidos/media
     expose:
       - 5000
     env_file:
@@ -27,3 +33,5 @@ services:
 
 volumes:
   postgres_data:
+  static_volume:
+  media_volume:

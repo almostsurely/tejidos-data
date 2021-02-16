@@ -1,12 +1,15 @@
+import os
 
-
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory, request
+from flask_crontab import Crontab
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config.from_object("tejidos.config.Config")
 db = SQLAlchemy(app)
+crontab = Crontab(app)
 
 
 class User(db.Model):
@@ -41,3 +44,30 @@ class Station(db.Model):
 def hello_world():
     stations = Station.query.all()
     return jsonify(stations=[{"id": station.id} for station in stations])
+
+
+@app.route("/media/<path:filename>")
+def mediafiles(filename):
+    return send_from_directory(app.config["MEDIA_FOLDER"], filename)
+
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload_file():
+    if request.method == "POST":
+        file = request.files["file"]
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config["MEDIA_FOLDER"], filename))
+    return f"""
+    <!doctype html>
+    <title>upload new File</title>
+    <form action="" method=post enctype=multipart/form-data>
+      <p><input type=file name=file><input type=submit value=Upload>
+    </form>
+    """
+
+@crontab.job(minute="1")
+def my_scheduled_job():
+    import time
+    ts = time.time()
+    with open(os.path.join(app.config["MEDIA_FOLDER"], f"{ts}.txt", "w")) as file:
+        file.write(ts)

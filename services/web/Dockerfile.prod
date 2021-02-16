@@ -36,6 +36,9 @@ WORKDIR $APP_HOME
 
 # install dependencies
 RUN yum install -y nmap
+RUN yum -y install crontabs
+RUN chkconfig crond on
+
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --upgrade pip
