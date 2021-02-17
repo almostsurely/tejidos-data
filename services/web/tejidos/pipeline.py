@@ -7,7 +7,7 @@ import argparse
 import geojson
 from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 
-from tejidos import SentinelManager, SCIHUB_URL, timeframe, mask_from_json, list_files
+
 
 
 def main():

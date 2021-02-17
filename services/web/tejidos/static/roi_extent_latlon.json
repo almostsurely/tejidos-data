@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "roi_extent_latlon",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "id": 1, "properties": { "id": 1.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -99.223452457393208, 19.233473285751689 ], [ -99.222324228316666, 19.431316313103622 ], [ -99.031957641180696, 19.430188084027073 ], [ -99.031393526642418, 19.233473285751689 ], [ -99.223452457393208, 19.233473285751689 ] ] ] } }
+]
+}

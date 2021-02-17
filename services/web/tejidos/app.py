@@ -1,9 +1,12 @@
+import json
 import os
 
+import geojson
 from flask import Flask, jsonify, send_from_directory, request
 from flask_crontab import Crontab
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -28,7 +31,7 @@ class Station(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), unique=True, nullable=False)
     address = db.Column(db.String(128), unique=True, nullable=False)
-    geo = db.Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)
+    geo = db.Column(Geometry(geometry_type='POINT'), nullable=False)
     zip_code = db.Column(db.Integer)
     station_type = db.Column(db.String(128), nullable=False)
 
@@ -40,10 +43,19 @@ class Station(db.Model):
         self.zip_code = zip_code
         self.station_type = station_type
 
+
+class Shape(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), unique=True, nullable=False)
+    geo = db.Column(Geometry(geometry_type='POLYGON'), nullable=False)
+
+
 @app.route("/")
 def hello_world():
     stations = Station.query.all()
-    return jsonify(stations=[{"id": station.id, "name": station.name} for station in stations])
+    shapes = Shape.query.all()
+    return jsonify(stations=[{"id": station.id, "name": station.name, "zip": station.zip_code} for station in stations],
+                   shape=[{"name": shape.name, "geo": geojson.loads(geojson.dumps(to_shape(shape.geo)))} for shape in shapes])
 
 
 @app.route("/media/<path:filename>")
