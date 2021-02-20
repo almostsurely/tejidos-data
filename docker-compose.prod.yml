@@ -6,7 +6,6 @@ services:
     ports:
       - 1337:80
     volumes:
-      - static_volume:/home/app/web/tejidos/static
       - media_volume:/home/app/web/tejidos/media
     depends_on:
       - web
@@ -16,7 +15,6 @@ services:
       dockerfile: Dockerfile.prod
     command: gunicorn --bind 0.0.0.0:5000 manage:app
     volumes:
-      - static_volume:/home/app/web/tejidos/static
       - media_volume:/home/app/web/tejidos/media
     expose:
       - 5000
@@ -24,6 +22,19 @@ services:
       - ./.env.prod
     depends_on:
       - db
+      - redis
+  worker:
+    build: ./services/web
+    command: python manage.py run_worker
+    volumes:
+      - media_volume:/home/app/web/tejidos/media
+    environment:
+      - IS_WORKER=True
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - db
+      - redis
   db:
     image: kartoza/postgis:13.0
     volumes:
@@ -31,7 +42,9 @@ services:
     env_file:
       - ./.env.prod.db
 
+  redis:
+    image: redis:6-alpine
+
 volumes:
   postgres_data:
-  static_volume:
   media_volume:

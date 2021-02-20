@@ -12,6 +12,19 @@ services:
       - ./.env.dev
     depends_on:
       - db
+      - redis
+  worker:
+    build: ./services/web
+    command: python manage.py run_worker
+    volumes:
+      - ./services/web/:/usr/src/app/
+    environment:
+      - IS_WORKER=True
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
   db:
     image: kartoza/postgis:13.0
     volumes:
@@ -20,6 +33,9 @@ services:
       - POSTGRES_USER=hello_flask
       - POSTGRES_PASSWORD=hello_flask
       - POSTGRES_DB=hello_flask_dev
+  redis:
+    image: redis:6-alpine
+
 
 volumes:
   postgres_data:

@@ -11,7 +11,7 @@ then
     echo "PostgreSQL started"
 fi
 
-if [ "$FLASK_ENV" = "development" ]
+if [ "$FLASK_ENV" = "development" ] && [ ! "$IS_WORKER" = "True" ]
 then
     echo "Creating the database tables..."
     python manage.py create_db
@@ -19,6 +19,11 @@ then
     echo "Seeding the database tables..."
     python manage.py seed_db
     echo "Tables created"
+fi
+
+if [ "$IS_WORKER" = "True" ]
+then
+    echo "This is the worker"
 fi
 
 exec "$@"

@@ -55,3 +55,6 @@ typing-extensions==3.7.4.3
 urllib3==1.26.2
 Werkzeug==1.0.1
 wrapt==1.12.1
+redis==3.5.3
+rq==1.7.0
+rq-dashboard==0.6.1

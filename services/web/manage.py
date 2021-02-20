@@ -1,9 +1,12 @@
 import os
 from datetime import date
 
+import redis
 from flask import logging
 from flask.cli import FlaskGroup
 from geoalchemy2.shape import to_shape
+from redis import Connection
+from rq import Worker
 from sentinelsat import read_geojson, geojson_to_wkt
 
 from tejidos.data_preparation.sentinel_manager import timeframe, SentinelManager
@@ -60,6 +63,14 @@ def seed_db():
 
 
     db.session.commit()
+
+@cli.command("run_worker")
+def run_worker():
+    redis_url = app.config["REDIS_URL"]
+    redis_connection = redis.from_url(redis_url)
+    worker = Worker(app.config["QUEUES"], connection=redis_connection)
+    worker.work()
+
 
 if __name__ == "__main__":
     cli()

@@ -2,15 +2,22 @@ import json
 import os
 
 import geojson
-from flask import Flask, jsonify, send_from_directory, request
+import redis
+import rq_dashboard
+from flask import Flask, jsonify, send_from_directory, request, current_app
 from flask_crontab import Crontab
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
+from redis import Connection
+from rq import Queue
 from werkzeug.utils import secure_filename
+
+from tejidos.server.main.task import create_task
 
 app = Flask(__name__)
 app.config.from_object("tejidos.config.Config")
+app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 db = SQLAlchemy(app)
 crontab = Crontab(app)
 
@@ -77,9 +84,17 @@ def upload_file():
     </form>
     """
 
-@crontab.job(minute="1")
-def my_scheduled_job():
-    import time
-    ts = time.time()
-    with open(os.path.join(app.config["MEDIA_FOLDER"], f"{ts}.txt", "w")) as file:
-        file.write(ts)
+
+@app.route("/tasks", methods=["POST"])
+def run_task():
+    task_type = request.json["type"]
+    q = Queue(connection=redis.from_url(current_app.config["REDIS_URL"]),
+              default_timeout=current_app.config["REDIS_TIMEOUT"])
+    task = q.enqueue(create_task, task_type)
+    response_object = {
+        "status": "success",
+        "data": {
+            "task_id": task.get_id()
+        }
+    }
+    return jsonify(response_object), 202
