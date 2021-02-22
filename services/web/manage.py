@@ -4,13 +4,9 @@ from datetime import date
 import redis
 from flask import logging
 from flask.cli import FlaskGroup
-from geoalchemy2.shape import to_shape
-from redis import Connection
 from rq import Worker
 from sentinelsat import read_geojson, geojson_to_wkt
-
-from tejidos.data_preparation.sentinel_manager import timeframe, SentinelManager
-from tejidos.app import app, db, User, Station, Shape
+from tejidos.extensions import app, db, User, Station, Shape
 from tejidos.data_preparation.ecobici_manager import EcobiciManager
 
 cli = FlaskGroup(app)
@@ -20,21 +16,6 @@ def create_db():
     db.drop_all()
     db.create_all()
     db.session.commit()
-
-
-@cli.command("download_sentinel")
-def download_sentinel_image():
-    first_day_current_month = timeframe()[0]
-    last_day_current_month = timeframe()[1]
-
-    footprint = Shape.query.filter_by(name='cdmx').first()
-    shply_geom = to_shape(footprint.geo)
-    products = SentinelManager.instance().api_query(footprint=shply_geom.to_wkt(),
-                                          begin_date=first_day_current_month,
-                                          end_date=last_day_current_month)
-
-    product = SentinelManager.last_product(products)
-    SentinelManager.instance().download_product(product, "tejidos/static")
 
 
 @cli.command("seed_db")
@@ -54,12 +35,13 @@ def seed_db():
                                zip_code=station.get("zipCode"),
                                station_type=station.get("stationType")))
 
-    source = os.path.join('tejidos/static', 'roi_extent_latlon.json')
+    shapes = {'cdmx': 'roi_extent_latlon.json'}
 
-    footprint = geojson_to_wkt(read_geojson(source))
-    db.session.add(Shape(name="cdmx",
-                         geo=footprint))
-
+    for name, filename in shapes.items():
+        source = os.path.join('tejidos/static', filename)
+        footprint = geojson_to_wkt(read_geojson(source))
+        db.session.add(Shape(name=name,
+                             geo=footprint))
 
 
     db.session.commit()

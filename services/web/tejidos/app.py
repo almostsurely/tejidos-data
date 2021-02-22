@@ -13,56 +13,27 @@ from redis import Connection
 from rq import Queue
 from werkzeug.utils import secure_filename
 
-from tejidos.server.main.task import create_task
-
-app = Flask(__name__)
-app.config.from_object("tejidos.config.Config")
-app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
-db = SQLAlchemy(app)
-crontab = Crontab(app)
+from tejidos.extensions import db, Station, Shape, Sentinel
+from tejidos.server.main.task import create_task, download_sentinel
 
 
-class User(db.Model):
-    __tablename__ = "users"
+def create_app(config: str):
+    app = Flask(__name__)
+    app.config.from_object(config)
+    db.init_app(app)
+    app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(128), unique=True, nullable=False)
-    active = db.Column(db.Boolean(), default=True, nullable=False)
+    return app
 
-    def __init__(self, email):
-        self.email = email
-
-class Station(db.Model):
-    __tablename__ = "station"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-    address = db.Column(db.String(128), unique=True, nullable=False)
-    geo = db.Column(Geometry(geometry_type='POINT'), nullable=False)
-    zip_code = db.Column(db.Integer)
-    station_type = db.Column(db.String(128), nullable=False)
-
-    def __init__(self, id: int, name: str, address: str, geo: str, zip_code: int, station_type: str):
-        self.id = id
-        self.name = name
-        self.address = address
-        self.geo = geo
-        self.zip_code = zip_code
-        self.station_type = station_type
-
-
-class Shape(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-    geo = db.Column(Geometry(geometry_type='POLYGON'), nullable=False)
+app = create_app("tejidos.config.Config")
 
 
 @app.route("/")
 def hello_world():
     stations = Station.query.all()
-    shapes = Shape.query.all()
-    return jsonify(stations=[{"id": station.id, "name": station.name, "zip": station.zip_code} for station in stations],
-                   shape=[{"name": shape.name, "geo": geojson.loads(geojson.dumps(to_shape(shape.geo)))} for shape in shapes])
+    images = Sentinel.query.all()
+    return jsonify(shape=[{"name": sentinel.id,
+                           "creation_date": sentinel.created_date} for sentinel in images])
 
 
 @app.route("/media/<path:filename>")
@@ -91,6 +62,20 @@ def run_task():
     q = Queue(connection=redis.from_url(current_app.config["REDIS_URL"]),
               default_timeout=current_app.config["REDIS_TIMEOUT"])
     task = q.enqueue(create_task, task_type)
+    response_object = {
+        "status": "success",
+        "data": {
+            "task_id": task.get_id()
+        }
+    }
+    return jsonify(response_object), 202
+
+
+@app.route("/sentinel", methods=["POST"])
+def download_sentinel_handler():
+    q = Queue(connection=redis.from_url(current_app.config["REDIS_URL"]),
+              default_timeout=current_app.config["REDIS_TIMEOUT"])
+    task = q.enqueue(download_sentinel)
     response_object = {
         "status": "success",
         "data": {

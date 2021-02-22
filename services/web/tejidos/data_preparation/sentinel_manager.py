@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Tuple
+from typing import Tuple, List
 
 from pandas import DataFrame
 from sentinelsat import SentinelAPI
@@ -24,7 +24,7 @@ def timeframe(daysdelta: int = 10) -> Tuple[date]:
     return start_date, end_date
 
 
-def mask_from_json(geojson):
+def mask_from_json(geojson) -> List:
     return [geojson['features'][0]['geometry']]
 
 
@@ -87,7 +87,10 @@ class SentinelManager:
         return product_name
 
     @staticmethod
-    def harmonize_bands(bands_list, cropping_mask, extension=".tif"):
+    def harmonize_bands(directory: str, bands_list: List[str], cropping_mask: List, extension: str = "tif"):
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         for band in bands_list:
             with rasterio.open(band) as src:
@@ -99,7 +102,7 @@ class SentinelManager:
                              "width": out_image.shape[2],
                              "transform": out_transform})
             output_path = basename(band)[:-4]
-            with rasterio.open(output_path + extension, "w", **out_meta) as dest:
+            with rasterio.open(os.path.join(directory, f"{output_path}.{extension}"), "w", **out_meta) as dest:
                 dest.write(out_image)
 
 

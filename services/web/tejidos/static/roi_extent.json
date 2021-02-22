@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"name": "roi_extent",
+"features": [
+{ "type": "Feature", "id": 1, "properties": { "id": 1.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 463200.0, 2115000.0 ], [ 463200.0, 2166540.0 ], [ 505740.0, 2166540.0 ], [ 505740.0, 2115000.0 ], [ 463200.0, 2115000.0 ] ] ] } }
+]
+}
