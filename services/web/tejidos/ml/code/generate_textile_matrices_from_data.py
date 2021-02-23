@@ -7,6 +7,7 @@ import copy as copy
 import os
 from sklearn.cluster import KMeans
 import click
+from sklearn.impute import KNNImputer
 
 
 def get_threading(labels_revisited):
@@ -80,7 +81,7 @@ def load_data(filename):
 
 def rename_columns(df, rename_dict=None):
     if rename_dict is None:
-        rename_dict = {"X4_colonias_id": "coloniaid", "X4_alcaldias_id": "alcaldiaid"}
+        rename_dict = {"4_colonias_id": "coloniaid", "4_alcaldias_id": "alcaldiaid"}
 
     df = df.rename(columns=rename_dict)
 
@@ -105,7 +106,7 @@ def extract_data_from_df(df, columns_to_drop=None):
 
 def normalize_matrix(X):
     X = X - X.mean(axis=0)
-    X = X / X.std(axis=0)
+    X = X / (X.std(axis=0) + 0.001)
 
     return X
 
@@ -217,20 +218,9 @@ def generate_plots(
         plt.close("all")
 
 
-@click.command()
-@click.option(
-    "--filename", default="../data/20210206_tejidos_testdata4.csv", show_default=True
-)
-@click.option(
-    "--dir_output",
-    default="../generate_textile_matrices/20210206_tejidos_testdata4",
-    show_default=True,
-)
-@click.option("--generate_plots_bool", default=True, show_default=True)
-@click.option("--random_state", default=0, show_default=True)
+
 def generate_textile_matrices_from_data(
-    filename, dir_output, generate_plots_bool, random_state=0
-):
+    filename, dir_output, generate_plots_bool: bool = False, random_state=0) -> None:
     if not os.path.exists(dir_output):
         os.makedirs(dir_output)
 

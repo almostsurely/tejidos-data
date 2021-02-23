@@ -43,7 +43,6 @@ def seed_db():
         db.session.add(Shape(name=name,
                              geo=footprint))
 
-
     db.session.commit()
 
 @cli.command("run_worker")

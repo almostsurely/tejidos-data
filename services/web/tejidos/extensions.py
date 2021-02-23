@@ -52,3 +52,10 @@ class Sentinel(db.Model):
     id = db.Column(db.String(128), primary_key=True)
     mask = db.Column(db.Integer, db.ForeignKey('shape.id'))
     created_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+class Loom(db.Model):
+    __tablename__ = 'sim'
+
+    id = db.Column(db.Integer, primary_key=True)
+    info = db.Column(db.UnicodeText, unique=True, nullable=False)
+    created_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)

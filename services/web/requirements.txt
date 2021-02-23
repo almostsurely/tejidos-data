@@ -58,3 +58,4 @@ wrapt==1.12.1
 redis==3.5.3
 rq==1.7.0
 rq-dashboard==0.6.1
+matplotlib==3.3.4

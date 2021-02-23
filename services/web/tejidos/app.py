@@ -11,10 +11,11 @@ from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
 from redis import Connection
 from rq import Queue
+from sqlalchemy import desc
 from werkzeug.utils import secure_filename
 
-from tejidos.extensions import db, Station, Shape, Sentinel
-from tejidos.server.main.task import create_task, download_sentinel
+from tejidos.extensions import db, Station, Shape, Sentinel, Loom
+from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom
 
 
 def create_app(config: str):
@@ -31,9 +32,9 @@ app = create_app("tejidos.config.Config")
 @app.route("/")
 def hello_world():
     stations = Station.query.all()
-    images = Sentinel.query.all()
-    return jsonify(shape=[{"name": sentinel.id,
-                           "creation_date": sentinel.created_date} for sentinel in images])
+    sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
+    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel.id}/results")
+    return jsonify(payload=loom_result_json, date=sentinel.created_date)
 
 
 @app.route("/media/<path:filename>")
