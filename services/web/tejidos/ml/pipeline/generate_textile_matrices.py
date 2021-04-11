@@ -273,7 +273,7 @@ def get_labels(X, n_clusters, random_state, df, n_clusters_treadling):
 @click.option("--sample_size", default=None, show_default=False)
 @click.option("--random_seed", default=None, show_default=False)
 @click.option("--random_state", default=None, show_default=False)
-def generate_textile_matrices(
+def generate_textile_matrices_from_data(
         filename, dir_output, generate_plots_bool=False, random_state=None, n_clusters_treadling=None, random_tieup=False,
         convolution_radius=None, conv_shape='square', sample_size=None, n_clusters=None, random_seed=None,
 ):
@@ -339,4 +339,4 @@ def generate_textile_matrices(
         )
 
 if __name__ == "__main__":
-    generate_textile_matrices()
+    generate_textile_matrices_from_data()
