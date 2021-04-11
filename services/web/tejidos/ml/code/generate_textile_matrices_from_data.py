@@ -7,7 +7,16 @@ import copy as copy
 import os
 from sklearn.cluster import KMeans
 import click
-from sklearn.impute import KNNImputer
+from datetime import datetime
+import sys
+
+# for convolution
+# https://scikit-image.org/docs/dev/auto_examples/filters/plot_rank_mean.html
+from skimage import data
+from skimage.morphology import disk
+from skimage.morphology import square
+from skimage.filters import rank
+from skimage.util import img_as_ubyte
 
 
 def get_threading(labels_revisited):
@@ -22,8 +31,11 @@ def get_treadling(labels_revisited):
     return treadling
 
 
-def get_tieup(n_clusters):
-    tieup = np.eye(n_clusters)
+def get_tieup(n_clusters, random_tieup=False):
+    if random_tieup is False:
+        tieup = np.eye(n_clusters)
+    else:
+        tieup = np.random.randint(2, size=(n_clusters, n_clusters))
 
     return tieup
 
@@ -81,7 +93,8 @@ def load_data(filename):
 
 def rename_columns(df, rename_dict=None):
     if rename_dict is None:
-        rename_dict = {"4_colonias_id": "coloniaid", "4_alcaldias_id": "alcaldiaid"}
+        # rename_dict = {"4_colonias_id": "coloniaid", "4_alcaldias_id": "alcaldiaid"}
+        rename_dict = {"X4_colonias_id": "coloniaid", "X4_alcaldias_id": "alcaldiaid"}
 
     df = df.rename(columns=rename_dict)
 
@@ -119,20 +132,21 @@ def get_clusters(X, n_clusters, random_state=0):
     return labels
 
 
-def sort_df_by_labels(df, labels):
+def sort_df_by_labels(df_input, labels):
+    df = df_input[["alcaldiaid"]].copy()
     df["labels"] = labels
     df_sorted = df.sort_values(by=["labels"])
-    df_sorted = df_sorted.reindex()
     labels_revisited = df_sorted["alcaldiaid"]
     labels_revisited = labels_revisited[~pd.isnull(labels_revisited)]
     labels_revisited = list(labels_revisited)
     labels_revisited = [int(i) for i in labels_revisited]
 
-    return labels_revisited
+    #     return labels_revisited
+    return {"labels_revisited": labels_revisited, "sort_index": df_sorted.index}
 
 
 def save_matrices_as_csv(
-    subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
+        subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
 ):
     filenames = ["threading", "tieup", "treadling", "draft"]
     for idx, f in enumerate(filenames):
@@ -145,7 +159,7 @@ def save_matrices_as_csv(
 
 
 def save_matrix_as_csv(
-    filename, matrix, type=int, delimiter=",", newline="\n", fmt="%i"
+        filename, matrix, type=int, delimiter=",", newline="\n", fmt="%i"
 ):
     np.savetxt(
         filename, matrix.astype(type), delimiter=delimiter, newline=newline, fmt=fmt
@@ -153,7 +167,7 @@ def save_matrix_as_csv(
 
 
 def visualize_matrix(
-    matrix, y_color, x_color, title_str="", figsize=(20, 10), edgecolors="k"
+        matrix, y_color, x_color, title_str="", figsize=(20, 10), edgecolors="k"
 ):
     cmap = ListedColormap([y_color, x_color])
     bounds = [-1, 1, 2]
@@ -188,12 +202,12 @@ def get_colors(x_color=None, y_color=None):
 
 
 def generate_plots(
-    threading_matrix,
-    tieup,
-    treadling_matrix,
-    draft_matrix,
-    subdir_output,
-    save_plots=True,
+        threading_matrix,
+        tieup,
+        treadling_matrix,
+        draft_matrix,
+        subdir_output,
+        save_plots=True,
 ):
     # colours
     colors = get_colors()
@@ -218,11 +232,58 @@ def generate_plots(
         plt.close("all")
 
 
+def convolve_matrix(matrix, convolution_radius, conv_shape):
+    if conv_shape == 'disk':
+        selem = disk(convolution_radius)
+    elif conv_shape == 'square':
+        selem = square(convolution_radius)
+
+    matrix_convoled = rank.mean(img_as_ubyte(matrix), selem=selem)
+
+    matrix_convoled[matrix_convoled > 0] = 1
+    matrix_convoled[matrix_convoled == 0] = 0
+
+    return matrix_convoled
+
+
+def get_labels(X, n_clusters, random_state, df, n_clusters_treadling):
+    labels = get_clusters(X, n_clusters, random_state)
+    labels_sort_output = sort_df_by_labels(df, labels)
+    labels_revisited = labels_sort_output['labels_revisited']
+    labels_revisited_sort_index = labels_sort_output['sort_index']
+
+    if n_clusters_treadling is None:
+        labels_treadling_revisited = labels_revisited.copy()
+    else:
+        labels_treadling = get_clusters(X, n_clusters_treadling, random_state)
+        labels_treadling_revisited = labels_treadling[labels_revisited_sort_index]
+
+    return {'labels_threading': labels_revisited, 'labels_treadling': labels_treadling_revisited}
 
 def generate_textile_matrices_from_data(
-    filename, dir_output, generate_plots_bool: bool = False, random_state=0) -> None:
+        filename, dir_output, generate_plots_bool=True, random_state=None, n_clusters_treadling=None, random_tieup=False,
+        convolution_radius=None, conv_shape='square', sample_size=None, n_clusters=None, random_seed=None,
+) -> None:
+
+    #     ignored parameters: sample_size, n_clusters, random_seed
+
     if not os.path.exists(dir_output):
-        os.makedirs(dir_output)
+        os.makedirs(dir_output, exist_ok=True)
+
+    if random_state is None:
+        random_state = int(datetime.utcnow().timestamp())
+
+    print(f"random_state:{random_state}")
+
+    if convolution_radius is None:
+        convolution_radius = rm.randrange(100, 150)
+
+    print(f"convolution_radius:{convolution_radius}")
+
+    if n_clusters_treadling is None:
+        n_clusters_treadling = rm.randrange(5, 16)
+
+    print(f"n_clusters_treadling:{n_clusters_treadling}")
 
     df = load_data(filename)
     df = rename_columns(df)
@@ -232,14 +293,16 @@ def generate_textile_matrices_from_data(
     X = extract_data_from_df(df)
     X = normalize_matrix(X)
 
-    labels = get_clusters(X, n_clusters, random_state)
-    labels_revisited = sort_df_by_labels(df, labels)
+    labels_all = get_labels(X, n_clusters, random_state, df, n_clusters_treadling)
+    labels_revisited = labels_all['labels_threading']
+    labels_treadling_revisited = labels_all['labels_treadling']
 
     threading = get_threading(labels_revisited)
-    treadling = get_treadling(labels_revisited)
-    tieup = get_tieup(n_clusters)
+    treadling = get_treadling(labels_treadling_revisited)
+    tieup = get_tieup(n_clusters, random_tieup=random_tieup)
 
     draft_matrix = get_draft(treadling, threading, tieup)
+    draft_matrix = convolve_matrix(draft_matrix, convolution_radius, conv_shape)
     treadling_matrix = get_treadling_matrix(treadling)
     threading_matrix = get_threading_matrix(threading)
     save_matrices_as_csv(
@@ -250,7 +313,6 @@ def generate_textile_matrices_from_data(
         generate_plots(
             threading_matrix, tieup, treadling_matrix, draft_matrix, dir_output
         )
-
 
 if __name__ == "__main__":
     generate_textile_matrices_from_data()
