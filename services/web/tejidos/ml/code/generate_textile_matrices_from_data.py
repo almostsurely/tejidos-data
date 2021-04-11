@@ -93,8 +93,8 @@ def load_data(filename):
 
 def rename_columns(df, rename_dict=None):
     if rename_dict is None:
-        # rename_dict = {"4_colonias_id": "coloniaid", "4_alcaldias_id": "alcaldiaid"}
-        rename_dict = {"X4_colonias_id": "coloniaid", "X4_alcaldias_id": "alcaldiaid"}
+        rename_dict = {"4_colonias_id": "coloniaid", "4_alcaldias_id": "alcaldiaid"}
+        # rename_dict = {"X4_colonias_id": "coloniaid", "X4_alcaldias_id": "alcaldiaid"}
 
     df = df.rename(columns=rename_dict)
 
@@ -146,7 +146,7 @@ def sort_df_by_labels(df_input, labels):
 
 
 def save_matrices_as_csv(
-        subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
+    subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
 ):
     filenames = ["threading", "tieup", "treadling", "draft"]
     for idx, f in enumerate(filenames):
@@ -159,7 +159,7 @@ def save_matrices_as_csv(
 
 
 def save_matrix_as_csv(
-        filename, matrix, type=int, delimiter=",", newline="\n", fmt="%i"
+    filename, matrix, type=int, delimiter=",", newline="\n", fmt="%i"
 ):
     np.savetxt(
         filename, matrix.astype(type), delimiter=delimiter, newline=newline, fmt=fmt
@@ -167,7 +167,7 @@ def save_matrix_as_csv(
 
 
 def visualize_matrix(
-        matrix, y_color, x_color, title_str="", figsize=(20, 10), edgecolors="k"
+    matrix, y_color, x_color, title_str="", figsize=(20, 10), edgecolors="k"
 ):
     cmap = ListedColormap([y_color, x_color])
     bounds = [-1, 1, 2]
@@ -202,12 +202,12 @@ def get_colors(x_color=None, y_color=None):
 
 
 def generate_plots(
-        threading_matrix,
-        tieup,
-        treadling_matrix,
-        draft_matrix,
-        subdir_output,
-        save_plots=True,
+    threading_matrix,
+    tieup,
+    treadling_matrix,
+    draft_matrix,
+    subdir_output,
+    save_plots=True,
 ):
     # colours
     colors = get_colors()
@@ -233,9 +233,9 @@ def generate_plots(
 
 
 def convolve_matrix(matrix, convolution_radius, conv_shape):
-    if conv_shape == 'disk':
+    if conv_shape == "disk":
         selem = disk(convolution_radius)
-    elif conv_shape == 'square':
+    elif conv_shape == "square":
         selem = square(convolution_radius)
 
     matrix_convoled = rank.mean(img_as_ubyte(matrix), selem=selem)
@@ -249,8 +249,8 @@ def convolve_matrix(matrix, convolution_radius, conv_shape):
 def get_labels(X, n_clusters, random_state, df, n_clusters_treadling):
     labels = get_clusters(X, n_clusters, random_state)
     labels_sort_output = sort_df_by_labels(df, labels)
-    labels_revisited = labels_sort_output['labels_revisited']
-    labels_revisited_sort_index = labels_sort_output['sort_index']
+    labels_revisited = labels_sort_output["labels_revisited"]
+    labels_revisited_sort_index = labels_sort_output["sort_index"]
 
     if n_clusters_treadling is None:
         labels_treadling_revisited = labels_revisited.copy()
@@ -258,11 +258,24 @@ def get_labels(X, n_clusters, random_state, df, n_clusters_treadling):
         labels_treadling = get_clusters(X, n_clusters_treadling, random_state)
         labels_treadling_revisited = labels_treadling[labels_revisited_sort_index]
 
-    return {'labels_threading': labels_revisited, 'labels_treadling': labels_treadling_revisited}
+    return {
+        "labels_threading": labels_revisited,
+        "labels_treadling": labels_treadling_revisited,
+    }
+
 
 def generate_textile_matrices_from_data(
-        filename, dir_output, generate_plots_bool=True, random_state=None, n_clusters_treadling=None, random_tieup=False,
-        convolution_radius=None, conv_shape='square', sample_size=None, n_clusters=None, random_seed=None,
+    filename,
+    dir_output,
+    generate_plots_bool=True,
+    random_state=None,
+    n_clusters_treadling=None,
+    random_tieup=False,
+    convolution_radius=None,
+    conv_shape="square",
+    sample_size=None,
+    n_clusters=None,
+    random_seed=None,
 ) -> None:
 
     #     ignored parameters: sample_size, n_clusters, random_seed
@@ -294,8 +307,8 @@ def generate_textile_matrices_from_data(
     X = normalize_matrix(X)
 
     labels_all = get_labels(X, n_clusters, random_state, df, n_clusters_treadling)
-    labels_revisited = labels_all['labels_threading']
-    labels_treadling_revisited = labels_all['labels_treadling']
+    labels_revisited = labels_all["labels_threading"]
+    labels_treadling_revisited = labels_all["labels_treadling"]
 
     threading = get_threading(labels_revisited)
     treadling = get_treadling(labels_treadling_revisited)
@@ -313,6 +326,7 @@ def generate_textile_matrices_from_data(
         generate_plots(
             threading_matrix, tieup, treadling_matrix, draft_matrix, dir_output
         )
+
 
 if __name__ == "__main__":
     generate_textile_matrices_from_data()
