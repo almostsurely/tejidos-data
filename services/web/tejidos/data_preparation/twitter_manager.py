@@ -45,9 +45,9 @@ class TwitterManager:
 
             regex_result = re.match(r".*Magnitud ([0-9\.]+).*Lat ([-0-9\.]+) Lon ([-0-9\.]+).*", tweet.text)
             if regex_result:
-                result.append(Earthquake(magnitude=regex_result.group(1),
-                                         latitude=regex_result.group(2),
-                                         longitude=regex_result.group(3)))
+                result.append(Earthquake(magnitude=float(regex_result.group(1)),
+                                         latitude=float(regex_result.group(2)),
+                                         longitude=float(regex_result.group(3))))
         return result
 
 if __name__ == '__main__':
