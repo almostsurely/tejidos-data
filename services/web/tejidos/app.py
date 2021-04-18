@@ -14,6 +14,8 @@ from rq import Queue
 from sqlalchemy import desc
 from werkzeug.utils import secure_filename
 
+from tejidos.data_preparation.twitter_manager import TwitterManager
+from tejidos.data_preparation.weather_manager import WeatherManager
 from tejidos.extensions import db, Station, Shape, Sentinel, Loom
 from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom
 
@@ -29,13 +31,21 @@ def create_app(config: str):
 app = create_app("tejidos.config.Config")
 
 
-@app.route("/")
+@app.route("/satellite")
 def hello_world():
     stations = Station.query.all()
     sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
     loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel.id}/results")
     return jsonify(payload=loom_result_json, date=sentinel.created_date)
 
+@app.route("/earthquakes")
+def earthquakes():
+    return jsonify(payload=TwitterManager.instance().fetch_earthquake(number=10))
+
+@app.route("/weather")
+def weather():
+    return jsonify(payload=WeatherManager.instance().weather_from_lat_lon(latitude=os.getenv("THE_SUMMIT_LATITUDE"),
+                                                                          longitude=os.getenv("THE_SUMMIT_LONGITUDE")))
 
 @app.route("/media/<path:filename>")
 def mediafiles(filename):
@@ -84,3 +94,10 @@ def download_sentinel_handler():
         }
     }
     return jsonify(response_object), 202
+
+
+if __name__ == '__main__':
+
+    sentinel_id = 'S2A_MSIL2A_20210416T165851_N0300_R069_T14QMG_20210416T222158'
+    loom_result_json = csv_to_json_loom(f"/Users/amaury/Development/tejidos-data/services/web/tejidos/media/{sentinel_id}/results")
+    print(loom_result_json)

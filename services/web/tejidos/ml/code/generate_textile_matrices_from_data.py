@@ -214,8 +214,8 @@ def generate_plots(
     x_color = colors["x_color"]
     y_color = colors["y_color"]
 
-    filenames = ["threading", "tieup", "treadling", "draft"]
-    matrices = [threading_matrix, tieup, treadling_matrix, draft_matrix]
+    filenames = ["threading", "tieup", "treadling"]
+    matrices = [threading_matrix, tieup, treadling_matrix]
 
     for filename, matrix in zip(filenames, matrices):
         visualize_matrix(

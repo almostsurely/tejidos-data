@@ -33,8 +33,8 @@ class WeatherManager:
             cls._instance = WeatherManager(api_key=api_key)
         return cls._instance
 
-    def weather_from_lat_lon(self, latitude, longitude) -> Weather:
-        url = OPEN_WEATHER_URL.format(params=urllib.parse.urlencode({"lat": lat, "lon": lon, "appid": self.api_key}))
+    def weather_from_lat_lon(self, latitude: str, longitude: str) -> Weather:
+        url = OPEN_WEATHER_URL.format(params=urllib.parse.urlencode({"lat": latitude, "lon": longitude, "appid": self.api_key}))
         response = requests.get(url).json()
         return Weather(wind_speed=response.get("wind", {}).get("speed", 0.0),
                        humidity=response.get("main", {}).get("humidity", 0.0),

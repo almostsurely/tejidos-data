@@ -59,3 +59,5 @@ redis==3.5.3
 rq==1.7.0
 rq-dashboard==0.6.1
 matplotlib==3.3.4
+scikit-image==0.18.1
+tweepy==3.10.0

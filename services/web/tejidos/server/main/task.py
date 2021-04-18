@@ -13,9 +13,10 @@ import numpy as np
 import pandas
 import rasterio
 from geoalchemy2.shape import to_shape
-from flask import logging
+import logging
 from sentinelsat import read_geojson
 
+from data_preparation.twitter_manager import TwitterManager
 from tejidos.ml.code.generate_textile_matrices_from_data import generate_textile_matrices_from_data
 from tejidos.extensions import Shape, db, Sentinel, Loom
 from tejidos.data_preparation.sentinel_manager import timeframe, SentinelManager, mask_from_json, list_files
@@ -44,6 +45,7 @@ def create_pandas_file(directory: str, static_directory: str) -> str:
 
     df = pandas.DataFrame(data=brick, index=np.arange(brick.shape[0]), columns=column_names)
     df_colonias = df.groupby([group_by_column]).mean()
+
     output_file = os.path.join(directory, f"{uuid.uuid4()}.csv")
     df_colonias.to_csv(output_file)
     return output_file
@@ -56,16 +58,11 @@ def csv_to_json_loom(directory: str) -> Dict:
         if isinstance(data, list):
             return [transform(element) for element in data]
         return int(float(data))
-
     result = {}
-
     for csv_file in csv_files:
-
         with open(csv_file, 'r') as csv_file_handle:
             data_loaded = list(csv.reader(csv_file_handle, delimiter=','))
-
             result.update({basename(os.path.splitext(csv_file)[0]): transform(data_loaded)})
-
     return result
 
 def download_sentinel() -> bool:
@@ -82,38 +79,27 @@ def download_sentinel() -> bool:
     if not Sentinel.query.filter_by(id=title).count() > 0:
         product_name = os.path.isfile(os.path.join("tejidos/media", f"{title}.zip"))
         if not os.path.isfile(product_name):
+            print("Downloading product.")
             product_name = SentinelManager.instance().download_product(product, "tejidos/media")
         zipfile = ZipFile(product_name, 'r')
+        print("Extracting zip file.")
         zipfile.extractall("tejidos/media")
         zipfile.close()
         mask = Shape.query.filter_by(name='mask').first()
         cropping_mask = mask_from_json(read_geojson('tejidos/static/roi_extent.json'))  # TODO: This mask should be ingested to the database, but it didn't like the projection.
         bands = list_files(f'tejidos/media/{basename(product_name)[:-4]}.SAFE')
+        logging.info("Harmonizing.")
         SentinelManager.harmonize_bands(f"tejidos/media/{title}", bands, cropping_mask)
         os.remove(product_name)
         shutil.rmtree(f'tejidos/media/{basename(product_name)[:-4]}.SAFE')
         db.session.add(Sentinel(id=title,
                                 mask=mask))
-
-
         intermediate_result = create_pandas_file(f"tejidos/media/{title}", "tejidos/static")
-
         final_directory = f"tejidos/media/{title}/results"
+        print("Generating textile matrices.")
         generate_textile_matrices_from_data(intermediate_result, final_directory)
-
-
-
         db.session.commit()
     return True
 
-
-# if __name__ == '__main__':
-#     intermediate_result = create_pandas_file("/Users/amaury/Development/tejidos-data/services/web/tejidos/media/S2B_MSIL2A_20210220T170329_N0214_R069_T14QMG_20210220T210147",
-#                                 "/Users/amaury/Development/tejidos-data/services/web/tejidos/static")
-#
-#     generate_textile_matrices_from_data(intermediate_result, f"/Users/amaury/Development/tejidos-data/services/web/tejidos/media/S2B_MSIL2A_20210220T170329_N0214_R069_T14QMG_20210220T210147/result")
-#
-#     payload = csv_to_json_loom(f"/Users/amaury/Development/tejidos-data/services/web/tejidos/media/S2B_MSIL2A_20210220T170329_N0214_R069_T14QMG_20210220T210147/result")
-#
-#
-#     print(json.dumps(payload))
+if __name__ == '__main__':
+    download_sentinel()
