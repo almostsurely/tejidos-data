@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import os
 import urllib.request
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import pandas as pd
 import requests
@@ -48,7 +48,14 @@ class AccessToken:
                self.scope == other.scope and \
                self.token_type == other.token_type
 
+@dataclass()
+class Ecobici:
+    latitude: float
+    longitude: float
+    available_bikes: float
 
+    def to_dict(self):
+        return {key: str(value) for key, value in self.__dict__.items()}
 
 class EcobiciManager:
     _instance = None
@@ -58,6 +65,9 @@ class EcobiciManager:
         if cls._instance is None:
             client_id = os.getenv('ECOBICI_CLIENT_ID')
             client_secret = os.getenv('ECOBICI_CLIENT_SECRET')
+
+            if client_id is None or client_secret is None:
+                raise ValueError("Missing environmental variables: ECOBICI_CLIENT_ID, ECOBICI_CLIENT_SECRET")
             token = EcobiciManager.get_access_token(client_id=client_id, client_secret=client_secret)
             cls._instance = EcobiciManager(token=token)
         return cls._instance
@@ -110,49 +120,41 @@ class EcobiciManager:
         response = requests.get(gat_url)
         return response.json()
 
+    def get_all(self) -> List[Ecobici]:
+        station_list = self.get_station_list()
+        station_disponibility = self.get_station_disponibility()
+
+
+        station_statuses = {}
+
+        for status in station_disponibility['stationsStatus']:
+            station_statuses.update({status.get("id"): status})
+
+        result = []
+        for station in station_list.get('stations', []):
+            station_id = station.get('id')
+            if station_id is not None:
+                station_status = station_statuses.get(station_id, {})
+
+                entry = {**station,
+                         "lat": station.get("location", {}).get("lat"),
+                         "lon": station.get("location", {}).get("lon"),
+                         "available_bikes": station_status.get("availability", {}).get("bikes"),
+                         "available_slots": station_status.get("availability", {}).get("slots"),
+                         **station_status}
+
+
+                result.append(Ecobici(longitude=station.get("location", {}).get("lon"),
+                        latitude=station.get("location", {}).get("lat"),
+                        available_bikes=station_status.get("availability", {}).get("bikes")))
+
+        return result
 
 def main() -> None:
-    ecobici_manager = EcobiciManager.instance()
-    station_list = ecobici_manager.get_station_list()
-    station_disponibility = ecobici_manager.get_station_disponibility()
+    ecobicis = EcobiciManager.instance().get_all()
 
     import json
-    print(json.dumps(station_list, indent=4))
-
-    station_statuses = {}
-
-    for status in station_disponibility['stationsStatus']:
-        station_statuses.update({status.get("id"): status})
-
-    result = []
-    for station in station_list.get('stations', []):
-        station_id = station.get('id')
-        if station_id is not None:
-
-            station_status = station_statuses.get(station_id, {})
-
-            entry = {**station,
-                     "lat": station.get("location", {}).get("lat"),
-                     "lon": station.get("location", {}).get("lon"),
-                     "available_bikes": station_status.get("availability", {}).get("bikes"),
-                     "available_slots": station_status.get("availability", {}).get("slots"),
-                     **station_status}
-
-            del entry["location"]
-            del entry["availability"]
-
-
-            result.append(entry)
-
-
-    ecobici_data = pd.DataFrame.from_dict(result)
-
-    output_directory = 'data_ecobici'
-
-    if not os.path.isdir(output_directory):
-        os.mkdir(output_directory)
-
-    ecobici_data.to_csv(os.path.join(output_directory, 'ecobici_data.csv'), sep=',', encoding='utf-8')
+    print(json.dumps([ecobici.to_dict() for ecobici in ecobicis], indent=4))
 
 
 if __name__ == "__main__":
