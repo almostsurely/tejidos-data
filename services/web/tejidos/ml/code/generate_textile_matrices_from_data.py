@@ -146,13 +146,12 @@ def sort_df_by_labels(df_input, labels):
 
 
 def save_matrices_as_csv(
-    subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
-):
-    filenames = ["threading", "tieup", "treadling", "draft"]
+    subdir_output, threading_matrix, tieup, treadling_matrix):
+    filenames = ["threading", "tieup", "treadling"]
     for idx, f in enumerate(filenames):
         filenames[idx] = os.path.join(subdir_output, f + ".csv")
 
-    matrices = [threading_matrix, tieup, treadling_matrix, draft_matrix]
+    matrices = [threading_matrix, tieup, treadling_matrix]
 
     for filename, matrix in zip(filenames, matrices):
         save_matrix_as_csv(filename, matrix)
@@ -314,18 +313,18 @@ def generate_textile_matrices_from_data(
     treadling = get_treadling(labels_treadling_revisited)
     tieup = get_tieup(n_clusters, random_tieup=random_tieup)
 
-    draft_matrix = get_draft(treadling, threading, tieup)
-    draft_matrix = convolve_matrix(draft_matrix, convolution_radius, conv_shape)
+    # draft_matrix = get_draft(treadling, threading, tieup)
+    # draft_matrix = convolve_matrix(draft_matrix, convolution_radius, conv_shape)
     treadling_matrix = get_treadling_matrix(treadling)
     threading_matrix = get_threading_matrix(threading)
     save_matrices_as_csv(
-        dir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
+        dir_output, threading_matrix, tieup, treadling_matrix
     )
 
-    if generate_plots_bool:
-        generate_plots(
-            threading_matrix, tieup, treadling_matrix, draft_matrix, dir_output
-        )
+    #if generate_plots_bool:
+    #    generate_plots(
+    #        threading_matrix, tieup, treadling_matrix, draft_matrix, dir_output
+    #    )
 
 
 if __name__ == "__main__":

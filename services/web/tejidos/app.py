@@ -32,11 +32,11 @@ app = create_app("tejidos.config.Config")
 
 
 @app.route("/satellite")
-def hello_world():
-    stations = Station.query.all()
-    sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
-    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel.id}/results")
-    return jsonify(payload=loom_result_json, date=sentinel.created_date)
+def satellite():
+    # stations = Station.query.all()
+    # sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
+    loom_result_json = csv_to_json_loom(f"tejidos/ml/generated_textile_matrices/n_clusters=20")
+    return jsonify(payload=loom_result_json, date="TEST")
 
 @app.route("/earthquakes")
 def earthquakes():

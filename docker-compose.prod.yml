@@ -3,6 +3,7 @@ version: '3.7'
 services:
   nginx:
     build: ./services/nginx
+    restart: always
     ports:
       - 1337:80
     volumes:
@@ -13,7 +14,8 @@ services:
     build:
       context: ./services/web
       dockerfile: Dockerfile.prod
-    command: gunicorn --bind 0.0.0.0:5000 manage:app
+    restart: always
+    command: gunicorn --bind 0.0.0.0:5000 tejidos.app:app
     volumes:
       - media_volume:/home/app/web/tejidos/media
     expose:
@@ -25,6 +27,7 @@ services:
       - redis
   worker:
     build: ./services/web
+    restart: always
     command: python manage.py run_worker
     volumes:
       - media_volume:/home/app/web/tejidos/media
@@ -37,14 +40,15 @@ services:
       - redis
   db:
     image: kartoza/postgis:13.0
+    restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env.prod.db
 
   redis:
+    restart: always
     image: redis:6-alpine
 
 volumes:
   postgres_data:
-  media_volume:
