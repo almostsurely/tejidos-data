@@ -35,7 +35,8 @@ app = create_app("tejidos.config.Config")
 def satellite():
     # stations = Station.query.all()
     # sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
-    loom_result_json = csv_to_json_loom(f"tejidos/ml/generated_textile_matrices/n_clusters=20")
+    sentinel_id = 'S2A_MSIL2A_20210416T165851_N0300_R069_T14QMG_20210416T222158'
+    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel_id}/results")
     return jsonify(payload=loom_result_json, date="TEST")
 
 @app.route("/earthquakes")
