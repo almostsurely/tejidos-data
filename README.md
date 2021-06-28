@@ -28,7 +28,7 @@ Make sure that WSL2 is properly installed, it can no longer be automatically ins
 
 https://docs.microsoft.com/de-de/windows/wsl/install-win10#step-4---download-the-linux-kernel-update-package
 
-Change the EOL of the following files (can be done using notepad++ edit -> EOL conversion -> save)
+Change the EOL of the following files to LF(can be done using notepad++ edit -> EOL conversion -> save)
 
 .env.prod
 .env.prod.db
