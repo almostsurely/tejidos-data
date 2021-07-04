@@ -1,11 +1,14 @@
 import os
 from datetime import date
 
+import click
 import redis
 from flask import logging
 from flask.cli import FlaskGroup
 from rq import Worker
 from sentinelsat import read_geojson, geojson_to_wkt
+
+from tejidos.server.main.task import ingest_file
 from tejidos.extensions import app, db, User, Station, Shape
 from tejidos.data_preparation.ecobici_manager import EcobiciManager
 
@@ -51,6 +54,12 @@ def run_worker():
     redis_connection = redis.from_url(redis_url)
     worker = Worker(app.config["QUEUES"], connection=redis_connection)
     worker.work()
+
+@cli.command("ingest")
+@click.argument('title')
+def ingest_zip(title):
+    print(os.getcwd())
+    ingest_file(title=title)
 
 
 if __name__ == "__main__":

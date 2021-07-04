@@ -16,6 +16,7 @@ import rasterio
 from geoalchemy2.shape import to_shape
 import logging
 
+from pandas import DataFrame
 from sentinelsat import read_geojson
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -116,8 +117,11 @@ def distance_lat_lon(lat_1: float, lon_1: float, lat_2: float, lon_2: float) -> 
 
 
 
-def csv_to_json_loom(directory: str) -> Dict:
+def csv_to_json_loom(directory: str, exclude_draft: bool = True) -> Dict:
     csv_files = list_files(directory, endswith=".csv")
+
+    if exclude_draft:
+        csv_files = list(filter(lambda x: not x.endswith("draft.csv"), csv_files))
 
     def transform(data: Union[List, str]) -> Union[List, int]:
         if isinstance(data, list):
@@ -132,7 +136,12 @@ def csv_to_json_loom(directory: str) -> Dict:
     return result
 
 
-def download_sentinel() -> bool:
+def dowload_and_process_sentinel() -> bool:
+
+    return ingest_file(process_zip(title=download_sentinel()))
+
+
+def download_sentinel() -> str:
     first_day_current_month = timeframe()[0]
     last_day_current_month = timeframe()[1]
     footprint = Shape.query.filter_by(name='cdmx').first()
@@ -140,14 +149,31 @@ def download_sentinel() -> bool:
     products = SentinelManager.instance().api_query(footprint=shaply_geom.to_wkt(),
                                                     begin_date=first_day_current_month,
                                                     end_date=last_day_current_month)
-    product = SentinelManager.last_product(products)
+
+
+    return SentinelManager.last_product(products)
+
+
+def process_zip(product: DataFrame) -> bool:
     title = product['title'][0]
 
     if not Sentinel.query.filter_by(id=title).count() > 0:
-        product_name = os.path.isfile(os.path.join("tejidos/media", f"{title}.zip"))
+        product_name = get_product_name(title)
         if not os.path.isfile(product_name):
             print("Downloading product.")
-            product_name = SentinelManager.instance().download_product(product, "tejidos/media")
+            SentinelManager.instance().download_product(product, "tejidos/media")
+
+    return title
+
+def get_product_name(title: str) -> str:
+    return os.path.join("tejidos/media", f"{title}.zip")
+
+def ingest_file(title: str):
+    if not Sentinel.query.filter_by(id=title).count() > 0:
+
+        print(title)
+        product_name = get_product_name(title)
+        print(product_name)
         zipfile = ZipFile(product_name, 'r')
         print("Extracting zip file.")
         zipfile.extractall("tejidos/media")

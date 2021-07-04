@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 from tejidos.data_preparation.twitter_manager import TwitterManager
 from tejidos.data_preparation.weather_manager import WeatherManager
 from tejidos.extensions import db, Station, Shape, Sentinel, Loom
-from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom
+from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom, dowload_and_process_sentinel
 
 
 def create_app(config: str):
@@ -33,11 +33,12 @@ app = create_app("tejidos.config.Config")
 
 @app.route("/satellite")
 def satellite():
-    # stations = Station.query.all()
-    # sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
-    sentinel_id = 'S2A_MSIL2A_20210416T165851_N0300_R069_T14QMG_20210416T222158'
-    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel_id}/results")
-    return jsonify(payload=loom_result_json, date="TEST")
+    include_draft = request.args.get('include_draft', default=0, type=int)
+    print(f"include_draft {include_draft}")
+    sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
+    sentinel_id = sentinel.id
+    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel_id}/results", exclude_draft=include_draft == 0)
+    return jsonify(payload=loom_result_json, date=sentinel.created_date)
 
 @app.route("/earthquakes")
 def earthquakes():
@@ -87,7 +88,7 @@ def run_task():
 def download_sentinel_handler():
     q = Queue(connection=redis.from_url(current_app.config["REDIS_URL"]),
               default_timeout=current_app.config["REDIS_TIMEOUT"])
-    task = q.enqueue(download_sentinel)
+    task = q.enqueue(dowload_and_process_sentinel)
     response_object = {
         "status": "success",
         "data": {

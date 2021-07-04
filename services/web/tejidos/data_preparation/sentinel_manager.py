@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Tuple, List
 
+from numpy import source
 from pandas import DataFrame
-from sentinelsat import SentinelAPI
+from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 from datetime import date
 from datetime import timedelta
 import os
@@ -108,6 +109,24 @@ class SentinelManager:
 
 
 if __name__ == '__main__':
-    result = timeframe(15)
-    _, last = timeframe(15)
-    print(last)
+
+    scihub_user = "jequihua"
+    scihub_password = "6Filthy666"
+    sentinel_api = SentinelAPI(scihub_user, scihub_password, SCIHUB_URL)
+    sentinel_manager = SentinelManager(sentinel_api=sentinel_api)
+
+    source = os.path.join('/Users/amaury/Development/tejidos-data/services/web/tejidos/static/', 'roi_extent_latlon.json')
+    footprint = geojson_to_wkt(read_geojson(source))
+
+    first_day_current_month = timeframe()[0]
+    last_day_current_month = timeframe()[1]
+
+    products = sentinel_manager.api_query(footprint=footprint,
+                                          begin_date=first_day_current_month,
+                                          end_date=last_day_current_month)
+
+    print(products)
+
+    sentinel_manager.download_product(sentinel_manager.last_product(products), '/Users/amaury/Development/tejidos-data/services/web/tejidos/media')
+
+
