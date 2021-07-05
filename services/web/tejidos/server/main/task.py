@@ -138,7 +138,7 @@ def csv_to_json_loom(directory: str, exclude_draft: bool = True) -> Dict:
 
 def dowload_and_process_sentinel() -> bool:
 
-    return ingest_file(process_zip(title=download_sentinel()))
+    return ingest_file(process_zip(product=download_sentinel()))
 
 
 def download_sentinel() -> str:
