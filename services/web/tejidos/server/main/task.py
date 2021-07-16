@@ -35,7 +35,11 @@ def create_task(task_type: int) -> bool:
 
 def create_pandas_file(directory: str, static_directory: str) -> str:
     raster_list = filter(lambda x: "TCI" not in x,
-                         list(np.random.choice(list_files(directory, endswith=".tif"), 5)) + list_files(static_directory, endswith=".tif"))
+                         list(np.random.choice(list_files(directory, endswith=".tif"), 5)) + ["tejidos/static/2_Srtm-DEM.tif",
+                                                                                              "tejidos/static/4_alcaldias_id.tif",
+                                                                                              "tejidos/static/4_colonias_id.tif",
+                                                                                              "tejidos/static/5_lat.tif",
+                                                                                              "tejidos/static/5_lon.tif"])
 
     column_names = []
     result = []

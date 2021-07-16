@@ -1,3 +1,5 @@
+from typing import Dict
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import numpy as np
@@ -5,6 +7,7 @@ import pandas as pd
 import random as rm
 import copy as copy
 import os
+
 from sklearn.cluster import KMeans
 import click
 from datetime import datetime
@@ -146,15 +149,20 @@ def sort_df_by_labels(df_input, labels):
 
 
 def save_matrices_as_csv(
-    subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix):
-    filenames = ["threading", "tieup", "treadling", "draft"]
+    subdir_output, threading_matrix, tieup, treadling_matrix, draft_matrix = None):
+    filenames = ["threading", "tieup", "treadling"]
     for idx, f in enumerate(filenames):
         filenames[idx] = os.path.join(subdir_output, f + ".csv")
 
-    matrices = [threading_matrix, tieup, treadling_matrix, draft_matrix]
+    matrices = [threading_matrix, tieup, treadling_matrix]
 
     for filename, matrix in zip(filenames, matrices):
         save_matrix_as_csv(filename, matrix)
+
+    if draft_matrix is not None:
+        draft_filename = os.path.join(subdir_output, f + ".csv")
+        save_matrix_as_csv(draft_filename, draft_matrix)
+
 
 
 def save_matrix_as_csv(
@@ -262,10 +270,8 @@ def get_labels(X, n_clusters, random_state, df, n_clusters_treadling):
         "labels_treadling": labels_treadling_revisited,
     }
 
-
-def generate_textile_matrices_from_data(
+def generate_textile_matrices_from_data_without_saving(
     filename,
-    dir_output,
     generate_plots_bool=True,
     random_state=None,
     n_clusters_treadling=None,
@@ -275,12 +281,9 @@ def generate_textile_matrices_from_data(
     sample_size=None,
     n_clusters=None,
     random_seed=None,
-) -> None:
-
+    include_draft=True
+) -> Dict:
     #     ignored parameters: sample_size, n_clusters, random_seed
-
-    if not os.path.exists(dir_output):
-        os.makedirs(dir_output, exist_ok=True)
 
     if random_state is None:
         random_state = int(datetime.utcnow().timestamp())
@@ -313,12 +316,62 @@ def generate_textile_matrices_from_data(
     treadling = get_treadling(labels_treadling_revisited)
     tieup = get_tieup(n_clusters, random_tieup=random_tieup)
 
-    draft_matrix = get_draft(treadling, threading, tieup)
-    draft_matrix = convolve_matrix(draft_matrix, convolution_radius, conv_shape)
     treadling_matrix = get_treadling_matrix(treadling)
     threading_matrix = get_threading_matrix(threading)
+
+    
+    result = {
+        "threading_matrix": threading_matrix.tolist(),
+        "treadling_matrix": treadling_matrix.tolist(),
+        "tieup": tieup.tolist(),
+    }
+
+    if include_draft:
+        draft_matrix = get_draft(treadling, threading, tieup)
+        draft_matrix = convolve_matrix(draft_matrix, convolution_radius, conv_shape)
+        result.update({"draft_matrix": draft_matrix.tolist()})
+
+    return result
+
+
+
+
+def generate_textile_matrices_from_data(
+    filename,
+    dir_output,
+    generate_plots_bool=True,
+    random_state=None,
+    n_clusters_treadling=None,
+    random_tieup=False,
+    convolution_radius=None,
+    conv_shape="square",
+    sample_size=None,
+    n_clusters=None,
+    random_seed=None,
+    include_draft=True,
+) -> None:
+
+    if not os.path.exists(dir_output):
+        os.makedirs(dir_output, exist_ok=True)
+
+    result = generate_textile_matrices_from_data_without_saving(
+        filename,
+        generate_plots_bool,
+        random_state,
+        n_clusters_treadling,
+        random_tieup,
+        convolution_radius,
+        conv_shape,
+        sample_size,
+        n_clusters,
+        random_seed)
+
     save_matrices_as_csv(
-        dir_output, threading_matrix, tieup, treadling_matrix, draft_matrix
+        dir_output, 
+        result.get("threading_matrix"), 
+        result.get("tieup"), 
+        result.get("treadling_matrix"), 
+        result.get("draft_matrix")
     )
 
     #if generate_plots_bool:

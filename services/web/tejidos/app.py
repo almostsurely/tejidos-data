@@ -4,6 +4,7 @@ import os
 import geojson
 import redis
 import rq_dashboard
+from datetime import datetime
 from flask import Flask, jsonify, send_from_directory, request, current_app
 from flask_crontab import Crontab
 from flask_sqlalchemy import SQLAlchemy
@@ -19,6 +20,11 @@ from tejidos.data_preparation.weather_manager import WeatherManager
 from tejidos.extensions import db, Station, Shape, Sentinel, Loom
 from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom, dowload_and_process_sentinel
 
+from tejidos.ml.code.generate_textile_matrices_from_data import \
+    generate_textile_matrices_from_data_without_saving
+from tejidos.sentinel_mapping import SentinelMapper
+from tejidos.server.main.task import create_pandas_file
+
 
 def create_app(config: str):
     app = Flask(__name__)
@@ -33,12 +39,19 @@ app = create_app("tejidos.config.Config")
 
 @app.route("/satellite")
 def satellite():
+    now = datetime.now()
     include_draft = request.args.get('include_draft', default=0, type=int)
-    print(f"include_draft {include_draft}")
-    sentinel = Sentinel.query.order_by(desc(Sentinel.created_date)).first()
-    sentinel_id = sentinel.id
-    loom_result_json = csv_to_json_loom(f"tejidos/media/{sentinel_id}/results", exclude_draft=include_draft == 0)
-    return jsonify(payload=loom_result_json, date=sentinel.created_date)
+    month = request.args.get('month', default=now.month, type=int)
+    day = request.args.get('day', default=now.day, type=int)
+    path = SentinelMapper.instance().get_directory_from_day_month(day=day, month=month)
+    full_path = f"tejidos/static/{path}"
+    print(f"Generating textile matrices: {full_path}")
+    intermediate_result = create_pandas_file(full_path, f"tejidos/static")
+    loom_result_json = generate_textile_matrices_from_data_without_saving(intermediate_result, include_draft=include_draft)
+
+
+
+    return jsonify(date=path, payload=loom_result_json)
 
 @app.route("/earthquakes")
 def earthquakes():
