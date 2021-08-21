@@ -1,3 +1,4 @@
+import logging
 from typing import Dict
 
 import matplotlib.pyplot as plt
@@ -334,6 +335,15 @@ def generate_textile_matrices_from_data_without_saving(
     return result
 
 
+def generate_weather_from_data_without_saving(filename) -> Dict:
+    df = load_data(filename)
+
+    return {"colonias_id": df["4_colonias_id"].to_list(),
+            "alcaldias_id": df["4_alcaldias_id"].to_list(),
+            "weather_humidity_intensity": df["weather_humidity_intensity"].to_list(),
+            "weather_wind_speed_intensity": df["weather_wind_speed_intensity"].to_list(),
+            "weather_temp_intensity": df["weather_temp_intensity"].to_list(),
+            }
 
 
 def generate_textile_matrices_from_data(

@@ -21,7 +21,7 @@ from tejidos.extensions import db, Station, Shape, Sentinel, Loom
 from tejidos.server.main.task import create_task, download_sentinel, csv_to_json_loom, dowload_and_process_sentinel
 
 from tejidos.ml.code.generate_textile_matrices_from_data import \
-    generate_textile_matrices_from_data_without_saving
+    generate_textile_matrices_from_data_without_saving, generate_weather_from_data_without_saving
 from tejidos.sentinel_mapping import SentinelMapper
 from tejidos.server.main.task import create_pandas_file
 
@@ -43,11 +43,12 @@ def satellite():
     include_draft = request.args.get('include_draft', default=0, type=int)
     month = request.args.get('month', default=now.month, type=int)
     day = request.args.get('day', default=now.day, type=int)
+    clusters = request.args.get('clusters', default=16, type=int)
     path = SentinelMapper.instance().get_directory_from_day_month(day=day, month=month)
     full_path = f"tejidos/static/{path}"
     print(f"Generating textile matrices: {full_path}")
     intermediate_result = create_pandas_file(full_path, f"tejidos/static")
-    loom_result_json = generate_textile_matrices_from_data_without_saving(intermediate_result, include_draft=include_draft)
+    loom_result_json = generate_textile_matrices_from_data_without_saving(intermediate_result, n_clusters_treadling=clusters, include_draft=include_draft)
 
 
 
@@ -61,6 +62,21 @@ def earthquakes():
 def weather():
     return jsonify(payload=WeatherManager.instance().weather_from_lat_lon(latitude=os.getenv("THE_SUMMIT_LATITUDE"),
                                                                           longitude=os.getenv("THE_SUMMIT_LONGITUDE")))
+
+
+@app.route("/weather-complete")
+def weather_complete():
+
+    now = datetime.now()
+    month = request.args.get('month', default=now.month, type=int)
+    day = request.args.get('day', default=now.day, type=int)
+    path = SentinelMapper.instance().get_directory_from_day_month(day=day, month=month)
+    full_path = f"tejidos/static/{path}"
+    intermediate_result = create_pandas_file(full_path, f"tejidos/static")
+    weather_result_json = generate_weather_from_data_without_saving(intermediate_result)
+
+    return jsonify(date=path, payload=weather_result_json)
+
 
 @app.route("/media/<path:filename>")
 def mediafiles(filename):
