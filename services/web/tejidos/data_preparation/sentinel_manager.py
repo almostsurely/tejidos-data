@@ -110,8 +110,8 @@ class SentinelManager:
 
 if __name__ == '__main__':
 
-    scihub_user = "jequihua"
-    scihub_password = "6Filthy666"
+    scihub_user = ""
+    scihub_password = ""
     sentinel_api = SentinelAPI(scihub_user, scihub_password, SCIHUB_URL)
     sentinel_manager = SentinelManager(sentinel_api=sentinel_api)
 
